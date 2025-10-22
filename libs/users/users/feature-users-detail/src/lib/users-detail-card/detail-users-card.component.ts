@@ -65,7 +65,6 @@ export class DetailUsersCardComponent implements OnInit {
   }
   @Input({ required: true })
   set vm(vm: DetailUsersCardVm) {
-     console.log('🟠 Component received vm:', vm);
     this._vm = vm;
 
     if (vm.user) {

@@ -161,8 +161,10 @@ export const addUserStoryPointsEffect = createEffect(
         apiService.post<UsersDTO, CreateUserDTO>(`/users/${user.id}`, user).pipe(
           tap(() => onSuccessAddSP ()),
           map((userData) => UsersActions.addUserStoryPointsSuccess({ userData })),
-          tap((response) => console.log('Effect response', response)),
-          catchError((error) => of(UsersActions.addUserStoryPointsFailed({ error }))),
+          catchError((error) => {
+              console.error('Error', error);
+              return of(UsersActions.addUserStoryPointsFailed({ error }));
+            }),
         ),
       ),
     );
