@@ -12,7 +12,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { onSuccessEditionCbType } from '@users/users/data-access';
+import { onSuccessEditionCbType, onSuccessSPonCbType, UsersFacade } from '@users/users/data-access';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -65,6 +65,7 @@ export class DetailUsersCardComponent implements OnInit {
   }
   @Input({ required: true })
   set vm(vm: DetailUsersCardVm) {
+     console.log('🟠 Component received vm:', vm);
     this._vm = vm;
 
     if (vm.user) {
@@ -74,6 +75,7 @@ export class DetailUsersCardComponent implements OnInit {
         username: vm.user.username,
         city: vm.user.city,
       });
+      this.totalStoryPoints.setValue(vm.user.totalStoryPoints ?? 0);
     }
 
     if (vm.editMode) {
@@ -82,6 +84,7 @@ export class DetailUsersCardComponent implements OnInit {
       this.formGroup.disable();
     }
   }
+  storyPointsEditMode = false;
 
   public formGroup = new FormBuilder().group({
     name: new FormControl({ value: '', disabled: !this.vm.editMode }, [Validators.required]),
@@ -90,21 +93,25 @@ export class DetailUsersCardComponent implements OnInit {
     city: new FormControl({ value: '', disabled: !this.vm.editMode }),
   });
 
+  public totalStoryPoints = new FormControl({ value: 0, disabled: true });
+
   @Output() editUser = new EventEmitter<{
     user: CreateUserDTO;
     onSuccessCb: onSuccessEditionCbType;
   }>();
+  @Output() addStoryPoints = new EventEmitter<{ user: CreateUserDTO; onSuccessAddSP: onSuccessSPonCbType }>();
   @Output() closeUser = new EventEmitter();
   @Output() closeEditMode = new EventEmitter();
   @Output() openEditMode = new EventEmitter();
   @Output() deleteUser = new EventEmitter();
   @ViewChild('snackbar') snackbarTemplateRef!: TemplateRef<any>;
+  @ViewChild('snackbarStoryPoints') snackbarTemplateRefSP!: TemplateRef<any>;
   private dadata = inject(DadataApiService);
   public citySuggestions = this.formGroup.controls.city.valueChanges.pipe(
     debounceTime(300),
     distinctUntilChanged(),
     filter(Boolean),
-    switchMap((value) => this.dadata.getCities(value))
+    switchMap((value) => this.dadata.getCities(value)),
   );
 
   private snackBar = inject(MatSnackBar);
@@ -121,7 +128,12 @@ export class DetailUsersCardComponent implements OnInit {
       horizontalPosition: 'center',
       verticalPosition: 'top',
     });
-
+  private onAddSPSuccess: onSuccessSPonCbType = () =>
+    this.snackBar.openFromTemplate(this.snackbarTemplateRefSP, {
+      duration: 2500,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+    });
   onSubmit(): void {
     this.editUser.emit({
       user: {
@@ -152,6 +164,31 @@ export class DetailUsersCardComponent implements OnInit {
     this.deleteUser.emit();
   }
 
+  toggleStoryPointsEdit() {
+    this.storyPointsEditMode = true;
+    this.totalStoryPoints.enable();
+  }
+
+  storyPointsClose() {
+    this.storyPointsEditMode = false;
+    this.totalStoryPoints.disable();
+  }
+
+  onAddStoryPoints() {
+    this.totalStoryPoints.disable();
+    this.addStoryPoints.emit({
+      user: {
+        name: this.formGroup.value.name || '',
+        email: this.formGroup.value.email || '',
+        totalStoryPoints: this.totalStoryPoints.value || 0,
+        purchaseDate: new Date().toString() || '',
+        educationStatus: 'trainee',
+      },
+      onSuccessAddSP: this.onAddSPSuccess
+    });
+    this.storyPointsEditMode = false;
+  }
+
   public onOptionClicked(selectedValue: string) {
     this.formGroup.get('city')?.setValue(selectedValue);
   }
@@ -168,7 +205,7 @@ export class DetailUsersCardComponent implements OnInit {
           const isFieldChanged = formEntries.some(([key, control]) => isFormControlChanged(key, control));
 
           this.areFieldsChanged$.next(isFieldChanged);
-        })
+        }),
       )
       .subscribe();
   }

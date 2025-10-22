@@ -56,3 +56,13 @@ div.alert-success {
   justify-content: center;
   color: white;
 }
+
+.form-field-story-points-field{
+  width: 100%;
+}
+
+.form-field-story-points-container{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}

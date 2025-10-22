@@ -15,7 +15,7 @@ export type UsersErrors = {
 export interface UsersState extends EntityState<UsersEntity> {
   selectedId?: string | number; // which Users record has been selected
   status: LoadingStatus;
-  usersFilter: {name: string};
+  usersFilter: { name: string };
   error: UsersErrors | null;
 }
 
@@ -39,7 +39,7 @@ const reducer = createReducer(
     status: 'loading' as const,
   })),
   on(UsersActions.loadUsersSuccess, (state, { users }) =>
-    usersAdapter.setAll(users, { ...state, status: 'loaded' as const })
+    usersAdapter.setAll(users, { ...state, status: 'loaded' as const }),
   ),
   on(UsersActions.loadUsersFailure, (state, { error }) => ({
     ...state,
@@ -54,8 +54,8 @@ const reducer = createReducer(
         id: userData.id,
         changes: userData,
       },
-      state
-    )
+      state,
+    ),
   ),
   on(UsersActions.editUserFailed, (state, { error }) => ({
     ...state,
@@ -67,7 +67,7 @@ const reducer = createReducer(
     status: 'loading' as const,
   })),
   on(UsersActions.loadUserSuccess, (state, { userData }) =>
-    usersAdapter.addOne({ ...userData }, { ...state, status: 'loaded' as const })
+    usersAdapter.addOne({ ...userData }, { ...state, status: 'loaded' as const }),
   ),
   on(UsersActions.loadUserFailed, (state, { error }) => ({
     ...state,
@@ -81,7 +81,19 @@ const reducer = createReducer(
   on(UsersActions.setUsersFilter, (state, { filter }) => ({
     ...state,
     usersFilter: filter,
-  }))
+  })),
+  on(UsersActions.addUserStoryPoints, (state) => ({
+    ...state,
+    status: 'loading' as const,
+  })),
+  on(UsersActions.addUserStoryPointsSuccess, (state, { userData }) =>
+    usersAdapter.updateOne({ id: userData.id, changes: userData }, { ...state, status: 'loaded' as const }),
+  ),
+  on(UsersActions.addUserStoryPointsFailed, (state, { error }) => ({
+    ...state,
+    status: 'error' as const,
+    error,
+  })),
 );
 
 export function usersReducer(state: UsersState | undefined, action: Action) {
